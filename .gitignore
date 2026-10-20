@@ -1,0 +1,16 @@
+data/
+__pycache__/
+.pytest_cache/
+.venv/
+extension-key.pem
+*.pyc
+dist/
+build/
+
+# Local secrets
+.env
+.env.*
+!.env.example
+
+# Local test audio
+kavya_test.mp3

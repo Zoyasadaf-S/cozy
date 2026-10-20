@@ -1,0 +1,5 @@
+-r requirements.txt
+pytest>=8
+httpx>=0.27
+cryptography>=42
+# optional: pystray pillow   (system tray icon)

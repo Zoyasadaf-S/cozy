@@ -1,0 +1,17 @@
+{
+  "manifest_version": 3,
+  "name": "Cozy Tab Controller",
+  "version": "2.0.0",
+  "description": "Lets Cozy reuse one Chrome tab per website, play YouTube, control video playback and read pages on request.",
+  "permissions": ["tabs", "storage", "scripting", "alarms"],
+  "host_permissions": [
+    "http://127.0.0.1:8000/*",
+    "http://localhost:8000/*",
+    "https://*.youtube.com/*",
+    "https://youtube.com/*"
+  ],
+  "optional_host_permissions": ["<all_urls>"],
+  "background": { "service_worker": "service_worker.js" },
+  "options_ui": { "page": "options.html", "open_in_tab": true },
+  "action": { "default_title": "Cozy Tab Controller" }
+}

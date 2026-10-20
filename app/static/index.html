@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Cozy</title>
+<style>
+body{font-family:system-ui,sans-serif;max-width:640px;margin:2rem auto;padding:0 1rem;background:#111;color:#eee}
+h1{margin:0 0 1rem}#log{border:1px solid #333;border-radius:8px;padding:1rem;height:50vh;overflow:auto;background:#1a1a1a}
+.me{color:#8ab4f8;margin:.4rem 0}.bot{color:#9be39b;margin:.4rem 0}.warn{color:#ffd166;margin:.4rem 0}
+form{display:flex;gap:.5rem;margin-top:1rem}input{flex:1;padding:.7rem;border-radius:8px;border:1px solid #444;background:#222;color:#eee}
+button{padding:.7rem 1rem;border:0;border-radius:8px;background:#3b82f6;color:#fff;cursor:pointer}#mic.on{background:#ef4444}
+</style></head><body>
+<h1>🛋️ Cozy</h1>
+<div id="log"></div>
+<form id="f"><input id="t" placeholder='Type: ok cozy open youtube' autocomplete="off" autofocus>
+<button type="button" id="mic">🎤</button><button>Send</button></form>
+<script>
+const log=document.getElementById('log'),t=document.getElementById('t');
+function add(c,m){const d=document.createElement('div');d.className=c;d.textContent=m;log.appendChild(d);log.scrollTop=log.scrollHeight;return d}
+async function send(text){
+  add('me','You: '+text);
+  try{
+    const r=await fetch('/command',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text})});
+    const j=await r.json();
+    if(!r.ok){add('warn','Error: '+(j.detail||r.status));return}
+    if(j.status==='approval_required'){
+      const d=add('warn','Cozy needs your approval for: '+j.text+'  ');
+      for(const [label,ok] of [['Approve',true],['Reject',false]]){
+        const b=document.createElement('button');b.textContent=label;b.style.marginLeft='.4rem';
+        b.onclick=async()=>{const a=await (await fetch('/approve/'+j.approval_id+'?approved='+ok,{method:'POST'})).json();add('bot','Cozy: '+a.status);d.querySelectorAll('button').forEach(x=>x.remove())};
+        d.appendChild(b)}
+    } else add('bot','Cozy: '+(j.message||j.status));
+  }catch(e){add('warn','Cannot reach Cozy backend')}
+}
+document.getElementById('f').onsubmit=e=>{e.preventDefault();const v=t.value.trim();if(v){t.value='';send(v)}};
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition,mic=document.getElementById('mic');
+const HELP={'not-allowed':'Mic permission blocked. Click the lock icon next to the address bar, set Microphone to Allow, then reload.',
+'service-not-allowed':'Mic permission blocked. Allow the microphone for this site and reload.',
+'no-speech':'I heard nothing. Check Windows Settings > Sound > Input: pick the right mic and watch the level bar move when you talk.',
+'audio-capture':'No microphone found. Plug in or enable a mic in Windows Sound settings.',
+'network':'Speech service unreachable. Chrome/Edge speech needs internet. Check your connection or try Chrome.',
+'language-not-supported':'Language not supported. Try Chrome.'};
+if(!SR){mic.disabled=true;add('warn','Voice needs Chrome or Edge (not Firefox/Brave). Typing still works.')}else{
+  const rec=new SR();rec.lang='en-IN';rec.interimResults=false;rec.maxAlternatives=1;
+  let heard=false,st=null;
+  rec.onstart=()=>{heard=false;mic.classList.add('on');st=add('warn','🎤 Listening... speak now')};
+  rec.onresult=e=>{heard=true;send(e.results[0][0].transcript)};
+  rec.onerror=e=>add('warn','Mic error ('+e.error+'): '+(HELP[e.error]||'Try Chrome and reload.'));
+  rec.onend=()=>{mic.classList.remove('on');if(st){st.remove();st=null}};
+  mic.onclick=()=>{try{rec.start()}catch(e){rec.stop()}}}
+</script></body></html>
